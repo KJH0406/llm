@@ -1,28 +1,32 @@
 import streamlit as st
 import time
 
+# 페이지 인터페이스 설정
 st.title("RAG")
 
+# 메시지 히스토리 관리
+if "messages" not in st.session_state: # 세션에 메시지가 없을 때만 새로운 메시지 저장 배열 생성, 만약 이미 가지고 있다면 기존 메시지 세션에 계속해서 저장됨
+    st.session_state["messages"] = [] # 세션에 메시지 저장 배열 생성
 
-with st.chat_message("human"): # 메시지 컨테이너의 역할을 human으로 설정
-    st.write("hello!") # 메시지 컨테이너 안에 텍스트 작성
+# 메세지 생성
+def send_message(message, role, save=True):
+    # 메시지 히스토리 배열에 저장되어 있는 메시지는 배열에 추가하지 않고 표시만 수행
+    with st.chat_message(role):
+        st.write(message)
+    # 메시지 히스토리 배열에 저장되지 않은 메시지만 새롭게 배열에 추가
+    if save:
+        st.session_state["messages"].append({"message":message, "role": role}) # 메시지 저장 배열에 생성된 메시지와 역할 저장
 
-with st.chat_message("ai"): # 메시지 컨테이너의 역할을 ai로 설정
-    st.write("how are you!") # 메시지 컨테이너 안에 텍스트 작성
+# 메시지 표시
+for message in st.session_state["messages"]:
+    # 메시지 히스토리 배열안에 담긴 메시지들은 이미 생성된 메시지임, 따라서 svae=False를 인자로 전달하여 중복 저장되지 않도록 설정
+    send_message(message["message"], message["role"], save=False)
+    
+# 메시지 입력
+message = st.chat_input("Send a message") 
 
-st.chat_input("Send a message") # 페이지 하단에 채팅을 입력할 수 있는 input 생성
-                                # 괄호 안에는 placeholder 작성
-
- # 컨테이너를 통해 상태를 표시할 수 있음.
-with st.status("처리 중...", expanded=True) as status: # expanded 통해서 아래 처리 과정 표시 여부 설정 가능
-    time.sleep(2) # time 설정 안하면 무한 로딩
-    st.write("파일을 가져오는 중입니다.")
-    time.sleep(2) 
-    st.write("파일을 임베딩하는 중입니다.")
-    time.sleep(2) 
-    st.write("파일을 캐싱하는 중입니다.")
-    time.sleep(2) 
-    status.update(label="완료되었습니다.", state="complete")
-
-
-
+# 메시지 입력 완료 시 메세지 생성 함수 실행
+if message:
+    send_message(message, "humman")
+    time.sleep(2)
+    send_message("메세지를 확인하였습니다.", "ai")
