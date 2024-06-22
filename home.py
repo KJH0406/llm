@@ -17,3 +17,5 @@ GPT API APP!
 - [ ] [Investor](/investor_gpt)
 """
 )
+
+# 괄호 안에는 파일 주소 입력(해당 파일로 이동)
