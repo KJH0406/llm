@@ -9,11 +9,11 @@ st.markdown(
 """            
 GPT API APP!
             
-- [ ] [DocumentGPT](/DocumentGPT)
-- [ ] [PrivateGPT](/PrivateGPT)
-- [ ] [QuizGPT](/QuizGPT)
-- [ ] [SiteGPT](/SiteGPT)
-- [ ] [MeetingGPT](/MeetingGPT)
-- [ ] [InvestorGPT](/InvestorGPT)
+- [ ] [RAG](/rag_gpt)
+- [ ] [Private](private_gpt)
+- [ ] [Quiz](/quiz_gpt)
+- [ ] [SiteCrawler](/site_crawler_gpt)
+- [ ] [Meeting](/meeting_gpt)
+- [ ] [Investor](/investor_gpt)
 """
 )
