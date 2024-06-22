@@ -12,6 +12,24 @@ import streamlit as st
 # 페이지 인터페이스 설정
 st.title("RAG")
 
+# 채팅 응답 스트리밍으로 제공
+class ChatCallbackHandler(BaseCallbackHandler):
+
+    # LLM의 응답 메시지를 저장할 변수
+    message = ""
+
+    def on_llm_start(self, *args, **kwargs):
+        self.message_box = st.empty()
+
+    def on_llm_end(self, *args, **kwargs):
+        save_message(self.message, "ai")
+
+    def on_llm_new_token(self, token, *args, **kwargs):
+        self.message += token
+        self.message_box.markdown(self.message)
+
+
+
 # 파일 업로드
 with st.sidebar:
     file = st.file_uploader("파일을 업로드 해주세요.", type=["pdf", "txt", "docx", "md"]) # 업로드 가능한 파일 확장자 지정
@@ -40,13 +58,16 @@ def embed_file(file):
 
         return retriever
 
+# 메시지 내용 저장
+def save_message(message, role):
+    st.session_state["messages"].append({"message": message, "role": role})
+
 # 메시지 생성
 def send_message(message, role, save=True):
     with st.chat_message(role):
         st.markdown(message) # 마크다운 형식으로 메시지 표현
-    
     if save:
-        st.session_state["messages"].append({"message": message, "role": role})
+        save_message(message, role)
 
 # 채팅 기록 표시
 def print_messages():
@@ -57,11 +78,14 @@ def print_messages():
 def formatting_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
 
-
 # LLM 모델 설정
 llm = ChatOpenAI(
     model_name="gpt-4o",
     temperature=0,
+    streaming=True,
+    callbacks=[
+        ChatCallbackHandler(),
+    ],
 )
 
 # 프롬프트 템플릿 생성
@@ -103,8 +127,8 @@ if file:
         } | prompt | llm
 
         # 체인 실행 및 응답 생성
-        response = chain.invoke(message).content
-        send_message(response, "ai")
+        with st.chat_message("ai"):
+            response = chain.invoke(message)
 
 else:
     # 처음 파일 업로드 되지 않았을 시 실행
