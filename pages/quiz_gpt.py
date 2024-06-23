@@ -8,21 +8,25 @@ from langchain.schema import BaseOutputParser
 import streamlit as st
 import json
 
-class JsonOutputParser(BaseOutputParser):
-    # 프롬프트 템플릿 json 안쪽 코드 json 파일로 로드
-    def parse(self, text):  
-        text = text.replace("```", "").replace("json", "")
-        return json.loads(text)
-
-output_parser = JsonOutputParser()
-
+# 인터페이스 설정
 st.set_page_config(
     page_title="Output parser",
     page_icon="🔗",
 )
-
 st.title("Output parser")
 
+
+# JSON 형식으로 변환
+class JsonOutputParser(BaseOutputParser):
+    def parse(self, text):  
+        # 입력된 텍스트를 JSON 형식으로 변환
+        text = text.replace("```", "").replace("json", "")
+        return json.loads(text)
+
+# 클래스 인스턴스를 생성
+output_parser = JsonOutputParser()
+
+# LLM 모델 설정
 llm = ChatOpenAI(
     model_name="gpt-4o",
     temperature=0,
@@ -32,6 +36,12 @@ llm = ChatOpenAI(
     ],
 )
 
+# 여러 문서를 하나로 병합
+def formatting_docs(docs):
+    # 문서의 내용을 두 줄 간격으로 합쳐서 반환
+    return "\n\n".join(document.page_content for document in docs)
+
+# 문서를 기반으로 Q&A 생성
 question_prompt = ChatPromptTemplate.from_messages(
         [
             (
@@ -68,14 +78,9 @@ question_prompt = ChatPromptTemplate.from_messages(
             )
         ]
     ) 
+question_chain = {"context": formatting_docs} | question_prompt | llm
 
-
-def formatting_docs(docs):
-    return "\n\n".join(document.page_content for document in docs)
-
-
-question_chain = {"context": formatting_docs}|question_prompt | llm
-
+# Q&A 생성 결과를 JSON 형태로 변환
 formatting_prompt = ChatPromptTemplate.from_messages(
     [
         (
@@ -200,21 +205,23 @@ formatting_prompt = ChatPromptTemplate.from_messages(
         )
     ]
 )
-
 formatting_chain = formatting_prompt | llm
 
+# Q&A 생성 및 포맷팅 실행 함수
 @st.cache_data(show_spinner="Q&A를 작성 중입니다...")
 def run_QnA_chain(_docs, topic):
     chain = {"context": question_chain} | formatting_chain | output_parser
     response = chain.invoke(_docs)
     return response
 
-@st.cache_data(show_spinner="Q&A를 작성 중입니다...")
+# 위키피디아 기반 문서 생성
+@st.cache_data(show_spinner="파일을 처리하는 중입니다...")
 def wiki_search(term):
     retriever = WikipediaRetriever(top_k_results=5)
     docs = retriever.get_relevant_documents(term)
     return docs
 
+# 사용자가 업로드한 문서 기반 생성
 @st.cache_data(show_spinner="파일을 처리하는 중입니다...") 
 def split_file(file):
     file_content = file.read() 
@@ -256,8 +263,11 @@ if not docs:
         """
     )
 else:
+    # 퀴즈 생성 방법이 설정되어 docs가 생성되면 해당 docs를 기반으로 Q&A 생성
     response = run_QnA_chain(docs, topic if topic else file.name)
-    with st.form("questions_form"): # qestions_form은 key 값임
+
+    # 결과물 UI 생성(streamlit form 활용)
+    with st.form("questions_form"):
         for question in response["questions"]:
             st.write(question["question"])
             st.radio("답변을 선택하세요.", [answer["answer"] for answer in question["answers"]],
