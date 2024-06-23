@@ -261,4 +261,10 @@ if not docs:
     )
 else:
     response = run_QnA_chain(docs, topic if topic else file.name)
-    st.write(response)
+    with st.form("questions_form"): # qestions_form은 key 값임
+        for question in response["questions"]:
+            st.write(question["question"])
+            st.radio("답변을 선택하세요.", [answer["answer"] for answer in question["answers"]],
+            index=None # 초기에 아무것도 선택하지 않음.
+            )
+        st.form_submit_button("Submit")
