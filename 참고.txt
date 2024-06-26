@@ -1,0 +1,7 @@
+1. 루트 폴더에 .streamlit 폴더 생성
+2. 폴더 안 secrets.toml 파일 생성
+3. 아래 키 값 입력
+OPENAI_API_KEY=""
+ALPHA_VANTAGE_API_KEY=""
+
+4. home.py 페이지 수정 investor 빼고 제외
